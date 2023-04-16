@@ -42,4 +42,17 @@ public class CategoryService : ICategoryService
         this.context.Entry(category).Collection(c => c.Products).Load();
         return category.Products.Count;
     }
+
+    public void Delete(string name)
+    {
+        this.context.Category.Remove(this.context.Category.Where(p => p.Name == name).First());
+        this.context.SaveChanges();
+    }
+
+    public void Edit(object value, string category)
+    {
+        Category c = this.context.Category.Where(p => p.Name == category).First();
+        c.Name = value as string ?? c.Name;
+        this.context.SaveChanges();
+    }
 }

@@ -33,33 +33,33 @@ internal class Application
         this.mainMenu.AddItem("New order",this.NewOrder, orders);
         var sfo = this.mainMenu.AddItem("Search for an order", parent: orders);
         this.mainMenu.AddItem("Get all orders by date span", this.GetOrdersByDates, sfo);
-        this.mainMenu.AddItem("Get all orders by client id", this.GetOrdersByClientId, sfo);                    // not implemented
-        this.mainMenu.AddItem("Find all orders by a product id", this.GetOrdersByProductId, sfo);               // not implemented
+        this.mainMenu.AddItem("Get all orders by client id", this.GetOrdersByClientId, sfo);
+        this.mainMenu.AddItem("Find all orders by a product id", this.GetOrdersByProductId, sfo);
         this.mainMenu.AddItem("Show order details by order id", this.ShowOrderDetails, orders);
-        this.mainMenu.AddItem("Delete an order", this.DeleteOrder, orders);                                     // not implemented
+        this.mainMenu.AddItem("Delete an order", this.DeleteOrder, orders);                                     
         
         var products = this.mainMenu.AddItem("Products");
         this.mainMenu.AddItem("New product", this.NewProduct, products);
         var sfp = this.mainMenu.AddItem("Search for a product", parent: products);
         this.mainMenu.AddItem("Get a product by name or id", this.FindProductByNameOrId, sfp);
         this.mainMenu.AddItem("Get all the products by categories", this.GetAllProductsByCategory, sfp);
-        this.mainMenu.AddItem("Edit product", this.EditProduct, products);                                     // not implemented 
-        this.mainMenu.AddItem("Delete product", this.DeleteProduct, products);                                 // not implemented
+        this.mainMenu.AddItem("Edit product", this.EditProduct, products);
+        this.mainMenu.AddItem("Delete product", this.DeleteProduct, products);
 
         var categories = this.mainMenu.AddItem("Categories");
         this.mainMenu.AddItem("New category", this.NewCategory, categories);
-        this.mainMenu.AddItem("Show all categories", this.ShowAllCategories, categories);                       // not implemented
-        this.mainMenu.AddItem("Edit category", this.EditCategory, categories);                                  // not implemented
-        this.mainMenu.AddItem("Delete category", this.DeleteCategory, categories);                              // not implemented
+        this.mainMenu.AddItem("Show all categories", this.ShowAllCategories, categories);
+        this.mainMenu.AddItem("Edit category", this.EditCategory, categories);
+        this.mainMenu.AddItem("Delete category", this.DeleteCategory, categories);
 
         var clients = this.mainMenu.AddItem("Clients");
         this.mainMenu.AddItem("New client", this.NewClient, clients);
         var fc = this.mainMenu.AddItem("Find client", parent: clients);
-        this.mainMenu.AddItem("Find client by last name or id", this.FindClientByLastNameOrId, fc);             // not implemented
-        this.mainMenu.AddItem("Find client by email", this.FindClientByEmail, fc);                              // not implemented
-        this.mainMenu.AddItem("Find client by phone number", this.FindClientByPhone, fc);                       // not implemented
-        this.mainMenu.AddItem("Edit client info", this.EditClientInfo, clients);                                // not implemented
-        this.mainMenu.AddItem("Delete client", this.DeleteClient, clients);                                     // not implemented
+        this.mainMenu.AddItem("Find client by last name or id", this.FindClientByLastNameOrId, fc);
+        this.mainMenu.AddItem("Find client by email", this.FindClientByEmail, fc);
+        this.mainMenu.AddItem("Find client by phone number", this.FindClientByPhone, fc);
+        this.mainMenu.AddItem("Edit client info", this.EditClientInfo, clients);
+        this.mainMenu.AddItem("Delete client", this.DeleteClient, clients); 
 
         this.mainMenu.AddItem("Exit", () => this.eventLoop = false);
     }
@@ -192,7 +192,7 @@ internal class Application
             if (current is not null)
             {
                 int quantity = AnsiConsole.Prompt(new TextPrompt<int>("Quantity > "));
-                order.Items.Add(new OrderItem()
+                order.OrderItems.Add(new OrderItem()
                 {
                     Price = current.Price,
                     Product = current,
@@ -200,7 +200,7 @@ internal class Application
                 });
             }
         } while (AnsiConsole.Confirm("Add more products?"));
-        if (order.Items.Count < 1)
+        if (order.OrderItems.Count < 1)
             throw new InvalidDataException("Unable to make an order without any products in it");
         this.orders.Add(order);
         Console.WriteLine($"Added new order:" +
@@ -226,12 +226,12 @@ internal class Application
         Console.WriteLine(  $"Id        : {order.Id}\n" +
                             $"Client    : {order.Client.LastName} {order.Client.FirstName}\n" +
                             $"Issue date: {order.IssueDateTime.Date}");
-        if(order.Items.Count < 1)
+        if(order.OrderItems.Count < 1)
         {
             Console.WriteLine("No products in the order");
             return;
         }
-        foreach(var item in order.Items)
+        foreach(var item in order.OrderItems)
             Console.WriteLine($" > product: [ {item.Product.Name,-60} ] quantity: [ {item.Quantity} ] price: [ {item.Price} ]");
     }    
     private void GetOrdersByDates()
@@ -245,15 +245,27 @@ internal class Application
     }
     private void GetOrdersByClientId()
     {
-        throw new NotImplementedException();
+        var startId = ConsoleUtilities.ReadNumber("Input start ID: ");
+        var endId = ConsoleUtilities.ReadNumber("Input end ID: ");
+        var result = this.orders.Search(o => (o.Id >= startId && o.Id <= endId), true);
+        Console.WriteLine("All the orders made between specified IDs:");
+        foreach (Order order in result)
+            Console.WriteLine($"Order id: [{order.Id,-4}] By client: [{order.Client.LastName,-12}{order.Client.FirstName,-12}] {order.IssueDateTime}");
     }
     private void GetOrdersByProductId()
     {
-        throw new NotImplementedException();
+        var startId = ConsoleUtilities.ReadNumber("Input start ID: ");
+        var endId = ConsoleUtilities.ReadNumber("Input end ID: ");
+        var result = this.orders.Search(_ => true, true).Where(p => p.OrderItems.Count(i => i.Product.Id >= startId && i.Product.Id <= endId) != 0).ToArray();
+        Console.WriteLine("All the orders made between specified product IDs:");
+        foreach (var order in result)
+            Console.WriteLine($"Order id: [{order.Id,-4}] By client: [{order.Client.LastName,-12}{order.Client.FirstName,-12}] {order.IssueDateTime}");
     }    
     private void DeleteOrder()
     {
-        throw new NotImplementedException();
+        var id = ConsoleUtilities.ReadNumber("Input an ID: ");
+        this.orders.Delete(this.orders?.FindById(id, true) ?? new Order());
+        Console.WriteLine("The order has been successfully deleted");
     }
     #endregion
 
@@ -314,12 +326,41 @@ internal class Application
 
     private void EditProduct()
     {
-        throw new NotImplementedException();
+        var product = this.SelectProduct();
+
+        Console.WriteLine("What do you want to edit?\n" +
+            "[1] => Name\n" +
+            "[2] => Description\n" +
+            "[3] => Price\n" +
+            "[Anything else] => Quit\n");
+        Console.Write("Choose: ");
+        if (int.TryParse(Console.ReadLine(), out int result) && result > 0 && result < 3) 
+        {
+            object updateData = new();
+            switch (result)
+            {
+                case 1:
+                    Console.Write("Enter the new product name: ");
+                    updateData = Console.ReadLine();
+                    break;
+                case 2:
+                    Console.Write("Enter the new description: ");
+                    updateData = Console.ReadLine();
+                    break;
+                case 3:
+                    updateData = ConsoleUtilities.ReadDecimalNumber("Enter the new price: ");
+                    break;
+            }
+
+            this.products.Edit(result, updateData, product);
+            Console.WriteLine("The product data has been successfully updated");
+        }
     }
 
     private void DeleteProduct()
     {
-        throw new NotImplementedException();
+        this.products.Delete(this.SelectProduct());
+        Console.WriteLine("The product has been successfully deleted");
     }
 
     #endregion
@@ -336,17 +377,24 @@ internal class Application
 
     private void ShowAllCategories()
     {
-        throw new NotImplementedException();
+        List<Category> categories = this.categories.GetCategoriesByName("");
+        foreach (Category category in categories)
+            Console.WriteLine($"ID: {category.Id,-5} | Name: {category.Name, -20}");
     }
 
     private void EditCategory()
     {
-        throw new NotImplementedException();
+        var category = this.SelectCategory();
+        Console.Write("Enter the new name of the selected category: ");
+        string? name = Console.ReadLine();
+        this.categories.Edit(name, category.Name);
+        Console.WriteLine("The product data has been successfully updated");
     }
 
     private void DeleteCategory()
     {
-        throw new NotImplementedException();
+        this.categories.Delete(this.SelectCategory()?.Name ?? string.Empty);
+        Console.WriteLine("The catogry has been successfully deleted");
     }
 
     #endregion
@@ -380,11 +428,98 @@ internal class Application
             Phone = string.IsNullOrEmpty(phone) ? null : phone
         });
     }
-    private void DeleteClient() => throw new NotImplementedException();
-    private void EditClientInfo() => throw new NotImplementedException();
-    private void FindClientByPhone() => throw new NotImplementedException();
-    private void FindClientByEmail() => throw new NotImplementedException();
-    private void FindClientByLastNameOrId() => throw new NotImplementedException();
+    private void DeleteClient()
+    {
+        this.clients.Delete(this.SelectClient() ?? new Client());
+        Console.WriteLine("The client has been successfully deleted");
+    }
+    private void EditClientInfo()
+    {
+        var client = this.SelectClient();
+
+        Console.WriteLine("What do you want to edit?\n" +
+            "[1] => First Name\n" +
+            "[2] => Last Name\n" +
+            "[3] => Email\n" +
+            "[4] => Phone\n" +
+            "[Anything else] => Quit\n");
+        Console.Write("Choose: ");
+        if (int.TryParse(Console.ReadLine(), out int result) && result > 0 && result < 4)
+        {
+            object? updateData = new();
+            switch (result)
+            {
+                case 1:
+                    updateData = ConsoleUtilities.ReadNames("Enter the new first name: ");
+                    break;
+                case 2:
+                    updateData = ConsoleUtilities.ReadNames("Enter the new last name: ");
+                    break;
+                case 3:
+                    updateData = ConsoleUtilities.ReadEmail("Enter the new email: ");
+                    break;
+                case 4:
+                    updateData = ConsoleUtilities.ReadPhoneNumber("Enter the new phone number: ");
+                    break;
+            }
+
+            this.clients.Edit(result, updateData, client);
+
+            Console.WriteLine("The product data has been successfully updated");
+        }
+        Console.WriteLine("Error");
+    }
+    private void FindClientByPhone()
+    {
+        Client? client = this.clients.GetClientByPhoneNumber(ConsoleUtilities.ReadPhoneNumber("Input phone number: "));
+        if (client is null)
+        {
+            Console.WriteLine("No clients found");
+            return;
+        }
+        if (client.Orders.Count < 1)
+            this.clients.LoadOrders(client);
+        Console.WriteLine($"Id                 : {client.Id}\n" +
+                          $"First Name         : {client.FirstName}\n" +
+                          $"Las Name           : {client.LastName}\n" +
+                          $"Email              : {client.Email}\n" +
+                          $"Phone              : {client.Phone}\n" +
+                          $"Order Issue Dates  : {(client.Orders.Count < 1 ? "<NO ORDERS>" : string.Join(", ", client.Orders.Select(c => c.IssueDateTime.ToShortDateString()).ToList()))}");
+    }
+    private void FindClientByEmail()
+    {
+        Client? client = this.clients.GetClientByEmail(ConsoleUtilities.ReadEmail("Input phone number: "));
+        if (client is null)
+        {
+            Console.WriteLine("No clients found");
+            return;
+        }
+        if (client.Orders.Count < 1)
+            this.clients.LoadOrders(client);
+        Console.WriteLine($"Id                 : {client.Id}\n" +
+                          $"First Name         : {client.FirstName}\n" +
+                          $"Las Name           : {client.LastName}\n" +
+                          $"Email              : {client.Email}\n" +
+                          $"Phone              : {client.Phone}\n" +
+                          $"Order Issue Dates  : {(client.Orders.Count < 1 ? "<NO ORDERS>" : string.Join(", ", client.Orders.Select(c => c.IssueDateTime.ToShortDateString()).ToList()))}");
+    }
+    private void FindClientByLastNameOrId()
+    {
+        Client? client = SelectClient();
+        if (client is null)
+        {
+            Console.WriteLine("No clients found");
+            return;
+        }
+        if (client.Orders.Count < 1)
+            this.clients.LoadOrders(client);
+        Console.WriteLine($"Id                 : {client.Id}\n" +
+                          $"First Name         : {client.FirstName}\n" +
+                          $"Las Name           : {client.LastName}\n" +
+                          $"Email              : {client.Email}\n" +
+                          $"Phone              : {client.Phone}\n" +
+                          $"Order Issue Dates  : {(client.Orders.Count < 1 ? "<NO ORDERS>" : string.Join(", ", client.Orders.Select(c => c.IssueDateTime.ToShortDateString()).ToList()))}");
+    }
 
     #endregion
 

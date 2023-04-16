@@ -33,4 +33,36 @@ public class ProductService : IProductService
 
     public List<Product> Search(Func<Product, bool> filter, bool loadRalatedData = false)
         => (loadRalatedData) ? this.context.Product.Include(p => p.Categories).Where(filter).ToList() : this.context.Product.Where(filter).ToList();
+
+    public void Delete(Product? product)
+    {
+        this.context.Product.Remove(product ?? new Product());
+        this.context.SaveChanges();
+    }
+
+    public void Edit(int property, object value, Product product)
+    {
+        switch (property)
+        {
+            case 1: //Name
+                {
+                    Product p = this.context.Product.Where(p => p.Equals(product)).First();
+                    product.Name = value as string ?? product.Name;
+                }
+                break;
+            case 2: //Description
+                {
+                    Product p = this.context.Product.Where(p => p.Equals(product)).First();
+                    product.Description = value as string ?? product.Description;
+                }
+                break;
+            case 3: //Price
+                {
+                    Product p = this.context.Product.Where(p => p.Equals(product)).First();
+                    product.Price = Convert.ToDecimal(value);
+                }
+                break;
+        }
+        this.context.SaveChanges();
+    }
 }

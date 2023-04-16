@@ -20,6 +20,12 @@ public class OrderService : IOrderService
         return order;
     }
 
+    public void Delete(Order order)
+    {
+        this.context.Order.Remove(order);
+        this.context.SaveChanges();
+    }
+
     public List<Order> Search(Func<Order, bool> filter, bool loadRalatedData = false)
         => (loadRalatedData) ? this.context.Order.Include(p => p.Client).Where(filter).ToList() : this.context.Order.Where(filter).ToList();
 
@@ -27,7 +33,7 @@ public class OrderService : IOrderService
         => (loadRalatedData) ?
                 this.context.Order
                     .Include(o => o.Client)
-                    .Include(o => o.Items)
+                    .Include(o => o.OrderItems)
                         .ThenInclude(i => i.Product)
                     .FirstOrDefault(o => o.Id == orderId) :
                 this.context.Order.Find(orderId);
