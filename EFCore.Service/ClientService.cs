@@ -54,35 +54,9 @@ public class ClientService : IClientService
         return client.Orders.Count;
     }
 
-    public void Edit(int property, object value, Client client)
+    public void Edit(Client upddatedClient)
     {
-        switch (property)
-        {
-            case 1: //First Name
-                {
-                    Client c = this.context.Client.Where(p => p.Equals(value)).First();
-                    c.FirstName = value as string ?? client.FirstName;
-                }
-                break;
-            case 2: //Last Name
-                {
-                    Client c = this.context.Client.Where(p => p.Equals(value)).First();
-                    c.LastName = value as string ?? client.LastName;
-                }
-                break;
-            case 3: //Email
-                {
-                    Client c = this.context.Client.Where(p => p.Equals(value)).First();
-                    c.Email = value as string ?? client.Email;
-                }
-                break;
-            case 4: //Phone
-                {
-                    Client c = this.context.Client.Where(p => p.Equals(value)).First();
-                    c.Phone = value as string ?? client.Phone;
-                }
-                break;
-        }
+        this.context.Update(upddatedClient);
         this.context.SaveChanges();
     }
 }

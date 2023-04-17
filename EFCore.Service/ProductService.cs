@@ -40,29 +40,9 @@ public class ProductService : IProductService
         this.context.SaveChanges();
     }
 
-    public void Edit(int property, object value, Product product)
+    public void Edit(Product updatedData)
     {
-        switch (property)
-        {
-            case 1: //Name
-                {
-                    Product p = this.context.Product.Where(p => p.Equals(product)).First();
-                    product.Name = value as string ?? product.Name;
-                }
-                break;
-            case 2: //Description
-                {
-                    Product p = this.context.Product.Where(p => p.Equals(product)).First();
-                    product.Description = value as string ?? product.Description;
-                }
-                break;
-            case 3: //Price
-                {
-                    Product p = this.context.Product.Where(p => p.Equals(product)).First();
-                    product.Price = Convert.ToDecimal(value);
-                }
-                break;
-        }
+        this.context.Update(updatedData);
         this.context.SaveChanges();
     }
 }

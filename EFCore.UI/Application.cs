@@ -2,6 +2,7 @@
 using EFCore.Shared.Interfaces;
 using EFCore.Shared.Utility;
 using Spectre.Console;
+using System.Reflection.Metadata.Ecma335;
 
 namespace EFCore.UI;
 internal class Application
@@ -336,23 +337,30 @@ internal class Application
         Console.Write("Choose: ");
         if (int.TryParse(Console.ReadLine(), out int result) && result > 0 && result < 3) 
         {
-            object updateData = new();
+            Product updateData = new()
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price
+            };
+            updateData.Categories.AddRange(product.Categories);
             switch (result)
             {
                 case 1:
                     Console.Write("Enter the new product name: ");
-                    updateData = Console.ReadLine();
+                    updateData.Name = Console.ReadLine();
                     break;
                 case 2:
                     Console.Write("Enter the new description: ");
-                    updateData = Console.ReadLine();
+                    updateData.Description = Console.ReadLine();
                     break;
                 case 3:
-                    updateData = ConsoleUtilities.ReadDecimalNumber("Enter the new price: ");
+                    updateData.Price = ConsoleUtilities.ReadDecimalNumber("Enter the new price: ");
                     break;
             }
 
-            this.products.Edit(result, updateData, product);
+            this.products.Edit(updateData);
             Console.WriteLine("The product data has been successfully updated");
         }
     }
@@ -387,7 +395,9 @@ internal class Application
         var category = this.SelectCategory();
         Console.Write("Enter the new name of the selected category: ");
         string? name = Console.ReadLine();
-        this.categories.Edit(name, category.Name);
+        Category updatedData = new Category() { Id = category.Id, Name = name };
+        updatedData.Products.AddRange(category.Products);
+        this.categories.Edit(updatedData);
         Console.WriteLine("The product data has been successfully updated");
     }
 
@@ -446,24 +456,32 @@ internal class Application
         Console.Write("Choose: ");
         if (int.TryParse(Console.ReadLine(), out int result) && result > 0 && result < 4)
         {
-            object? updateData = new();
+            Client? updateData = new()
+            {
+                Id = client.Id,
+                FirstName = client.FirstName,
+                LastName = client.LastName,
+                Email = client.Email,
+                Phone = client.Phone
+            };
+            updateData.Orders.AddRange(client.Orders);
             switch (result)
             {
                 case 1:
-                    updateData = ConsoleUtilities.ReadNames("Enter the new first name: ");
+                    updateData.FirstName = ConsoleUtilities.ReadNames("Enter the new first name: ");
                     break;
                 case 2:
-                    updateData = ConsoleUtilities.ReadNames("Enter the new last name: ");
+                    updateData.LastName = ConsoleUtilities.ReadNames("Enter the new last name: ");
                     break;
                 case 3:
-                    updateData = ConsoleUtilities.ReadEmail("Enter the new email: ");
+                    updateData.Email = ConsoleUtilities.ReadEmail("Enter the new email: ");
                     break;
                 case 4:
-                    updateData = ConsoleUtilities.ReadPhoneNumber("Enter the new phone number: ");
+                    updateData.Phone = ConsoleUtilities.ReadPhoneNumber("Enter the new phone number: ");
                     break;
             }
 
-            this.clients.Edit(result, updateData, client);
+            this.clients.Edit(updateData);
 
             Console.WriteLine("The product data has been successfully updated");
         }

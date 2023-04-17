@@ -49,10 +49,9 @@ public class CategoryService : ICategoryService
         this.context.SaveChanges();
     }
 
-    public void Edit(object value, string category)
+    public void Edit(Category updatedData)
     {
-        Category c = this.context.Category.Where(p => p.Name == category).First();
-        c.Name = value as string ?? c.Name;
+        this.context.Update(updatedData);
         this.context.SaveChanges();
     }
 }

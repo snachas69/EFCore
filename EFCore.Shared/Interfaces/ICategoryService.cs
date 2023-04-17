@@ -5,7 +5,7 @@ public interface ICategoryService
 {
     Category? Add(string name);
     void Delete(string name);
-    void Edit(object? value, string category);
+    void Edit(Category? updatedData);
     bool Exists(string name);
     List<Category> GetCategoriesByName(string name);
     Category? GetCategoryById(int id);

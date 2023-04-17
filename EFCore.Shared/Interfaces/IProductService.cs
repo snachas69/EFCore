@@ -5,7 +5,7 @@ public interface IProductService
 {
     Product Add(Product product);
     void Delete(Product? product);
-    void Edit(int property, object value, Product product);
+    void Edit(Product updatedData);
     Product? GetProductById(int id);
     List<Product> GetProductsByName(string productName);
     int LoadCategories(Product product);
